@@ -3,10 +3,13 @@
  * 请求/响应的 requestId 对应关系与错误消息映射。
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { IsolateRequest, WorkerResponse } from '../src/worker/sturmWorker';
+import type {
+  WorkerRequest,
+  WorkerResponse,
+} from '../src/worker/sturmWorker';
 
 interface SelfMock {
-  onmessage: ((e: { data: IsolateRequest }) => void) | null;
+  onmessage: ((e: { data: WorkerRequest }) => void) | null;
   postMessage: ReturnType<typeof vi.fn>;
 }
 
@@ -80,6 +83,111 @@ describe('Worker 消息处理', () => {
     if (msg.type === 'result') {
       expect(msg.result.totalRoots).toBe(0);
       expect(msg.result.intervals).toHaveLength(0);
+    }
+  });
+});
+
+describe('Worker 间距审计消息', () => {
+  it('审计请求返回 audit-result 消息且 requestId 一致', async () => {
+    const selfMock = await setupWorker();
+    selfMock.onmessage!({
+      data: {
+        type: 'audit',
+        requestId: 11,
+        coeffs: '1, -3, 2',
+        a: '0',
+        b: '5',
+        threshold: '3/2',
+      },
+    });
+    expect(selfMock.postMessage).toHaveBeenCalledTimes(1);
+    const msg = selfMock.postMessage.mock.calls[0][0] as WorkerResponse;
+    expect(msg.type).toBe('audit-result');
+    expect(msg.requestId).toBe(11);
+    if (msg.type === 'audit-result') {
+      expect(msg.audit.threshold).toBe('3/2');
+      expect(msg.audit.pairs).toHaveLength(1);
+      expect(msg.audit.pairs[0].relation).toBe('less');
+      expect(msg.audit.pairs[0].risk).toBe(true);
+      expect(msg.audit.riskCount).toBe(1);
+    }
+  });
+
+  it('审计恰等情形返回 equal 结论与公因子证据', async () => {
+    const selfMock = await setupWorker();
+    selfMock.onmessage!({
+      data: {
+        type: 'audit',
+        requestId: 12,
+        coeffs: '1, -3, 2',
+        a: '0',
+        b: '5',
+        threshold: '1',
+      },
+    });
+    const msg = selfMock.postMessage.mock.calls[0][0] as WorkerResponse;
+    expect(msg.type).toBe('audit-result');
+    if (msg.type === 'audit-result') {
+      expect(msg.audit.pairs[0].relation).toBe('equal');
+      expect(msg.audit.pairs[0].gcdFactor).toBe('x − 1');
+    }
+  });
+
+  it('阈值非法返回 error 消息且 code 为 BAD_THRESHOLD', async () => {
+    const selfMock = await setupWorker();
+    selfMock.onmessage!({
+      data: {
+        type: 'audit',
+        requestId: 13,
+        coeffs: '1, -3, 2',
+        a: '0',
+        b: '5',
+        threshold: '0',
+      },
+    });
+    const msg = selfMock.postMessage.mock.calls[0][0] as WorkerResponse;
+    expect(msg.type).toBe('error');
+    expect(msg.requestId).toBe(13);
+    if (msg.type === 'error') {
+      expect(msg.error.code).toBe('BAD_THRESHOLD');
+    }
+  });
+
+  it('可比较根不足返回 error 消息且 code 为 INSUFFICIENT_ROOTS', async () => {
+    const selfMock = await setupWorker();
+    selfMock.onmessage!({
+      data: {
+        type: 'audit',
+        requestId: 14,
+        coeffs: '1, 0, 1',
+        a: '-10',
+        b: '10',
+        threshold: '1',
+      },
+    });
+    const msg = selfMock.postMessage.mock.calls[0][0] as WorkerResponse;
+    expect(msg.type).toBe('error');
+    if (msg.type === 'error') {
+      expect(msg.error.code).toBe('INSUFFICIENT_ROOTS');
+    }
+  });
+
+  it('审计路径同样拒绝端点为根', async () => {
+    const selfMock = await setupWorker();
+    selfMock.onmessage!({
+      data: {
+        type: 'audit',
+        requestId: 15,
+        coeffs: '1, -3, 2',
+        a: '1',
+        b: '5',
+        threshold: '1',
+      },
+    });
+    const msg = selfMock.postMessage.mock.calls[0][0] as WorkerResponse;
+    expect(msg.type).toBe('error');
+    if (msg.type === 'error') {
+      expect(msg.error.code).toBe('ENDPOINT_ROOT');
     }
   });
 });

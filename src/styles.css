@@ -231,6 +231,37 @@ td.ok {
   font-weight: 600;
 }
 
+.audit h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.audit-form {
+  margin-top: 10px;
+}
+
+.audit-field {
+  max-width: 360px;
+}
+
+.audit-result {
+  margin-top: 14px;
+}
+
+tr.row-risk td {
+  background: #fff7f6;
+}
+
+td.risk {
+  color: var(--err);
+  font-weight: 600;
+}
+
+td.safe {
+  color: var(--ok);
+  font-weight: 600;
+}
+
 .footer {
   margin-top: 20px;
   color: var(--muted);

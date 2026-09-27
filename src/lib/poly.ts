@@ -31,6 +31,17 @@ export const leadingCoeff = (p: Poly): R.Rat =>
 
 export const neg = (p: Poly): Poly => ({ c: p.c.map(R.neg) });
 
+export const add = (a: Poly, b: Poly): Poly => {
+  const len = Math.max(a.c.length, b.c.length);
+  const out: R.Rat[] = [];
+  for (let i = 0; i < len; i++) {
+    const ca = i < a.c.length ? a.c[i] : R.ZERO;
+    const cb = i < b.c.length ? b.c[i] : R.ZERO;
+    out.push(R.add(ca, cb));
+  }
+  return poly(out);
+};
+
 export const sub = (a: Poly, b: Poly): Poly => {
   const len = Math.max(a.c.length, b.c.length);
   const out: R.Rat[] = [];
@@ -38,6 +49,20 @@ export const sub = (a: Poly, b: Poly): Poly => {
     const ca = i < a.c.length ? a.c[i] : R.ZERO;
     const cb = i < b.c.length ? b.c[i] : R.ZERO;
     out.push(R.sub(ca, cb));
+  }
+  return poly(out);
+};
+
+export const mul = (a: Poly, b: Poly): Poly => {
+  if (isZero(a) || isZero(b)) return ZERO;
+  const out: R.Rat[] = new Array<R.Rat>(a.c.length + b.c.length - 1).fill(
+    R.ZERO,
+  );
+  for (let i = 0; i < a.c.length; i++) {
+    if (R.isZero(a.c[i])) continue;
+    for (let j = 0; j < b.c.length; j++) {
+      out[i + j] = R.add(out[i + j], R.mul(a.c[i], b.c[j]));
+    }
   }
   return poly(out);
 };
@@ -79,6 +104,43 @@ export const remainder = (a: Poly, b: Poly): Poly => {
     r = sub(r, { c: t });
   }
   return r;
+};
+
+/** 首一化：各系数同除以首项系数（零多项式原样返回）。 */
+export const monic = (p: Poly): Poly => {
+  if (isZero(p)) return p;
+  const lc = leadingCoeff(p);
+  return { c: p.c.map((c) => R.div(c, lc)) };
+};
+
+/**
+ * 有理数域上的多项式最大公因子（欧几里得算法，结果首一化）。
+ * 全部系数运算为 BigInt 有理数精确运算。
+ */
+export const gcd = (a: Poly, b: Poly): Poly => {
+  let x = a;
+  let y = b;
+  let guard = 0;
+  while (!isZero(y)) {
+    if (++guard > 128) throw new Error('多项式最大公因子超出迭代上限');
+    const r = remainder(x, y);
+    x = y;
+    y = r;
+  }
+  return monic(x);
+};
+
+/**
+ * 有理平移：返回 p(x + t)，t 为精确有理数。
+ * 以 Horner 法在多项式环内对 (x + t) 展开，不引入任何近似。
+ */
+export const shift = (p: Poly, t: R.Rat): Poly => {
+  const linear: Poly = { c: [t, R.ONE] }; // x + t
+  let acc: Poly = ZERO;
+  for (let i = p.c.length - 1; i >= 0; i--) {
+    acc = add(mul(acc, linear), { c: [p.c[i]] });
+  }
+  return acc;
 };
 
 const termBody = (coefAbs: R.Rat, i: number, varName: string): string => {
