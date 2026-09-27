@@ -19,6 +19,8 @@ export type IsoErrorCode =
   | 'BAD_INTERVAL'
   | 'ENDPOINT_ROOT'
   | 'BAD_FORMAT'
+  | 'BAD_THRESHOLD'
+  | 'TOO_FEW_ROOTS'
   | 'INTERNAL';
 
 export class IsoError extends Error {

@@ -243,3 +243,88 @@ td.ok {
     grid-template-columns: 1fr;
   }
 }
+
+/* 间距风险审计 */
+.audit h2 {
+  margin-top: 0;
+  font-size: 1.15rem;
+}
+
+.audit-intro {
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.audit-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 14px;
+  align-items: end;
+  margin-bottom: 10px;
+}
+
+.audit-form .field {
+  margin-bottom: 0;
+}
+
+.audit-result {
+  margin-top: 14px;
+}
+
+table.intervals.audit-table td {
+  vertical-align: top;
+}
+
+table.intervals tr.risk td {
+  background: #fdeceb;
+}
+
+table.intervals tr.safe td {
+  background: #effaf2;
+}
+
+.relation {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.relation.less,
+.relation.equal {
+  color: var(--err);
+}
+
+.relation.greater {
+  color: var(--ok);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 12px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badge.risk {
+  background: var(--err);
+  color: #fff;
+}
+
+.badge.safe {
+  background: var(--ok);
+  color: #fff;
+}
+
+td.evidence {
+  font-size: 0.8rem;
+  color: var(--muted);
+  word-break: break-all;
+}
+
+@media (max-width: 640px) {
+  .audit-form {
+    grid-template-columns: 1fr;
+  }
+}
