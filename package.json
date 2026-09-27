@@ -1,0 +1,25 @@
+{
+  "name": "sturm-root-isolation",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "基于 Sturm 定理与 BigInt 有理数运算的精确实根隔离工具",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run",
+    "verify": "sh verify/verify.sh"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.6.3",
+    "vite": "^5.4.11",
+    "vitest": "^2.1.8"
+  }
+}

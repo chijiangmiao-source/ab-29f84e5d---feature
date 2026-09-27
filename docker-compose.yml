@@ -1,0 +1,28 @@
+# 精确实根隔离应用 + 验证服务
+# 常用命令：
+#   APP_PORT=8080 docker compose up app        # 启动应用（端口可配置）
+#   docker compose up --exit-code-from verify  # 运行验证并以退出码报告
+services:
+  app:
+    build: .
+    ports:
+      # 宿主机端口可通过环境变量 APP_PORT 配置，默认 8080
+      - "${APP_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/healthz"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 5s
+
+  verify:
+    build:
+      context: .
+      dockerfile: Dockerfile.verify
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      APP_URL: http://app:80
+    # 跑完测试、构建检查与 HTTP 冒烟后退出，退出码即验证结论
+    restart: "no"

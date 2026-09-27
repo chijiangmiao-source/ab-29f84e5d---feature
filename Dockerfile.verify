@@ -1,0 +1,9 @@
+# verify 服务镜像：包含完整源码与开发依赖，
+# 依次执行单元测试、构建检查、对 app 服务的 HTTP 冒烟测试，以退出码报告结果。
+FROM node:20-alpine
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY . .
+ENV APP_URL=http://app:80
+CMD ["sh", "verify/verify.sh"]
